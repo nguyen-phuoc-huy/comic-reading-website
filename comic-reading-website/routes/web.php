@@ -2,6 +2,106 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ComicController;
+use App\Http\Controllers\ChapterController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\FollowController;
+use App\Http\Controllers\HistoryController;
+
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ComicController as AdminComicController;
+use App\Http\Controllers\Admin\ChapterController as AdminChapterController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\AuthorController as AdminAuthorController;
+use App\Http\Controllers\Admin\CommentController as AdminCommentController;
+
+/*
+|--------------------------------------------------------------------------
+| Routes dành cho người đọc (công khai)
+|--------------------------------------------------------------------------
+*/
+
+// Trang chủ
+Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Danh sách truyện (lọc theo trạng thái, sắp xếp...)
+Route::get('/truyen', [ComicController::class, 'index'])->name('comics.index');
+
+// Chi tiết truyện
+Route::get('/truyen/{comic:slug}', [ComicController::class, 'show'])->name('comics.show');
+
+// Đọc chương (Laravel tự giới hạn chapter thuộc comic nhờ scoped binding)
+Route::get('/truyen/{comic:slug}/chap-{chapter:number}', [ChapterController::class, 'show'])
+    ->where('chapter', '[0-9]+(\.[0-9]+)?')
+    ->name('chapters.show');
+
+// Thể loại
+Route::get('/the-loai', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/the-loai/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
+
+// Tìm kiếm
+Route::get('/tim-kiem', [SearchController::class, 'index'])->name('search');
+
+/*
+|--------------------------------------------------------------------------
+| Routes cần đăng nhập
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+
+    // Theo dõi truyện
+    Route::get('/theo-doi', [FollowController::class, 'index'])->name('follows.index');
+    Route::post('/truyen/{comic}/follow', [FollowController::class, 'toggle'])->name('follow.toggle');
+
+    // Lịch sử đọc
+    Route::get('/lich-su', [HistoryController::class, 'index'])->name('history.index');
+    Route::delete('/lich-su/{history}', [HistoryController::class, 'destroy'])->name('history.destroy');
+    Route::delete('/lich-su', [HistoryController::class, 'clear'])->name('history.clear');
+
+    // Bình luận
+    Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Routes dành cho Admin
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth', 'admin'])
+    ->group(function () {
+
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // Truyện
+        Route::resource('comics', AdminComicController::class)->except(['show']);
+
+        // Chương (lồng trong truyện, shallow: edit/update/destroy không cần comic id)
+        Route::resource('comics.chapters', AdminChapterController::class)
+            ->except(['show'])
+            ->shallow();
+
+        // Xóa 1 ảnh trong chương
+        Route::delete('chapters/{chapter}/images/{image}', [AdminChapterController::class, 'destroyImage'])
+            ->name('chapters.images.destroy');
+
+        // Thể loại, tác giả
+        Route::resource('categories', AdminCategoryController::class)->except(['show']);
+        Route::resource('authors', AdminAuthorController::class)->except(['show']);
+
+        // Quản lý bình luận
+        Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
+        Route::delete('comments/{comment}', [AdminCommentController::class, 'destroy'])->name('comments.destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Routes đăng nhập / đăng ký (Laravel Breeze)
+|--------------------------------------------------------------------------
+*/
+require __DIR__ . '/auth.php';
