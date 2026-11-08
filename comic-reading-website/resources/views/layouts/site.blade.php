@@ -30,11 +30,43 @@
             min-height: 2.6em;
             font-size: .9rem;
         }
+
+        /* Menu thể loại: dạng lưới nhiều cột, hiện khi rê chuột (desktop) hoặc bấm (mobile) */
+        .nav-categories {
+            min-width: 520px;
+            padding: .75rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: .15rem .5rem;
+        }
+
+        .nav-categories.show {
+            display: grid;
+        }
+
+        @media (min-width: 992px) {
+            .navbar .nav-item.dropdown:hover>.nav-categories {
+                display: grid;
+                margin-top: 0;
+                top: 100%;
+                left: 0;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .nav-categories {
+                min-width: 0;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
     </style>
     @stack('styles')
 </head>
 
 <body class="bg-body-tertiary d-flex flex-column min-vh-100">
+
+    @php
+    $navCategories = \App\Models\Category::orderBy('name')->get(['id', 'name', 'slug']);
+    @endphp
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
@@ -47,12 +79,32 @@
 
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}"
-                            href="{{ route('home') }}">Trang chủ</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('comics.index') ? 'active' : '' }}"
-                            href="{{ route('comics.index') }}">Truyện</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}"
-                            href="{{ route('categories.index') }}">Thể loại</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('comics.*') ? 'active' : '' }}"
+                            href="{{ route('comics.index') }}">Truyện</a>
+                    </li>
+
+                    {{-- Thể loại: rê chuột hoặc bấm để xem danh sách --}}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {{ request()->routeIs('categories.*') ? 'active' : '' }}"
+                            href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Thể loại
+                        </a>
+                        <div class="dropdown-menu nav-categories shadow">
+                            <a class="dropdown-item fw-semibold text-primary" style="grid-column: 1 / -1"
+                                href="{{ route('categories.index') }}">
+                                <i class="bi bi-grid"></i> Tất cả thể loại
+                            </a>
+                            @forelse ($navCategories as $navCategory)
+                            <a class="dropdown-item rounded" href="{{ route('categories.show', $navCategory) }}">
+                                {{ $navCategory->name }}
+                            </a>
+                            @empty
+                            <span class="dropdown-item-text text-muted" style="grid-column: 1 / -1">Chưa có thể loại
+                                nào.</span>
+                            @endforelse
+                        </div>
+                    </li>
                 </ul>
 
                 <form class="d-flex me-lg-3 my-2 my-lg-0" method="GET" action="{{ route('search') }}">
