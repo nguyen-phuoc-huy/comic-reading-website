@@ -5,62 +5,78 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Author;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuthorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $authors = Author::withCount('comics')
+            ->when($request->q, fn ($q, $kw) => $q->where('name', 'like', "%{$kw}%"))
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.authors.index', compact('authors'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('admin.authors.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:authors,name'],
+        ]);
+
+        $data['slug'] = $this->uniqueSlug($data['name']);
+
+        Author::create($data);
+
+        return redirect()->route('admin.authors.index')
+            ->with('success', 'Đã thêm tác giả.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Author $author)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Author $author)
     {
-        //
+        return view('admin.authors.edit', compact('author'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Author $author)
     {
-        //
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('authors', 'name')->ignore($author->id)],
+        ]);
+
+        // Giữ nguyên slug cũ để không làm hỏng đường dẫn đã có
+        $author->update($data);
+
+        return redirect()->route('admin.authors.index')
+            ->with('success', 'Đã cập nhật tác giả.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Author $author)
     {
-        //
+        // Truyện của tác giả này sẽ có author_id = null (nullOnDelete)
+        $author->delete();
+
+        return redirect()->route('admin.authors.index')
+            ->with('success', 'Đã xóa tác giả.');
+    }
+
+    private function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name) ?: Str::lower(Str::random(8));
+        $slug = $base;
+        $i = 2;
+
+        while (Author::where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $i++;
+        }
+
+        return $slug;
     }
 }
