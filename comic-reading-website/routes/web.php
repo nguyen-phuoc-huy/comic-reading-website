@@ -104,4 +104,5 @@ Route::prefix('admin')
 | Routes đăng nhập / đăng ký (Laravel Breeze)
 |--------------------------------------------------------------------------
 */
-require __DIR__ . '/auth.php';
+
+//require __DIR__ . '/auth.php';
