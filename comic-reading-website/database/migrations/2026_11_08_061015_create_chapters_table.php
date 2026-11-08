@@ -13,7 +13,12 @@ return new class extends Migration
     {
         Schema::create('chapters', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('comic_id')->constrained()->cascadeOnDelete();
+            $table->decimal('number', 8, 1);          // cho phép chap 10.5
+            $table->string('title')->nullable();
+            $table->unsignedBigInteger('views')->default(0);
             $table->timestamps();
+            $table->unique(['comic_id', 'number']);
         });
     }
 

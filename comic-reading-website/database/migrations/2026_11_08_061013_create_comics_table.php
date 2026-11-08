@@ -13,7 +13,17 @@ return new class extends Migration
     {
         Schema::create('comics', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('author_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->string('other_names')->nullable();
+            $table->text('description')->nullable();
+            $table->string('cover')->nullable();
+            $table->enum('status', ['ongoing', 'completed', 'dropped'])->default('ongoing');
+            $table->unsignedBigInteger('views')->default(0);
             $table->timestamps();
+            $table->softDeletes();
+            $table->index('views');
         });
     }
 
