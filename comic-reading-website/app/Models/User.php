@@ -14,14 +14,19 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    public function followedComics()
+    {
+        return $this->belongsToMany(Comic::class, 'comic_follows')->withTimestamps();
+    }
+    public function histories()
+    {
+        return $this->hasMany(ReadingHistory::class);
+    }
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [

@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Author extends Model
 {
-    /** @use HasFactory<\Database\Factories\AuthorFactory> */
-    use HasFactory;
+    public function comics()
+    {
+        return $this->hasMany(Comic::class);
+    }         // Author
+
 }
