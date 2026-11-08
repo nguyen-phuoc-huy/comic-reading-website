@@ -8,13 +8,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IsAdmin
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
+        $user = $request->user();
+
+        if (! $user || $user->role !== 'admin') {
+            abort(403, 'Bạn không có quyền truy cập trang quản trị.');
+        }
+
         return $next($request);
     }
 }
