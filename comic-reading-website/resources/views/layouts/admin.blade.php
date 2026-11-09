@@ -8,98 +8,148 @@
     <title>@yield('title', 'Quản trị') - {{ config('app.name') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* Nút mũi tên mở/đóng menu (chỉ hiện trên điện thoại), xoay lên khi menu đang mở */
+        .menu-toggle i {
+            display: inline-block;
+            transition: transform .25s;
+        }
+
+        .menu-toggle[aria-expanded="true"] i {
+            transform: rotate(180deg);
+        }
+
+        /* ===== Thanh menu nằm dưới thanh đen ===== */
+        .admin-menu .nav-link {
+            color: var(--bs-body-color);
+            font-weight: 500;
+            padding: .65rem .9rem;
+            border-bottom: 3px solid transparent;
+        }
+
+        .admin-menu .nav-link:hover {
+            color: var(--bs-primary);
+        }
+
+        .admin-menu .nav-link.active {
+            color: var(--bs-primary);
+            border-bottom-color: var(--bs-primary);
+        }
+
+        /* Điện thoại: menu là danh sách dọc trượt xuống */
+        @media (max-width: 991.98px) {
+            #adminMenu {
+                max-height: calc(100vh - 4rem);
+                overflow-y: auto;
+            }
+
+            .admin-menu .nav-link {
+                padding: .6rem .5rem;
+                border-bottom: 0;
+                border-left: 3px solid transparent;
+            }
+
+            .admin-menu .nav-link.active {
+                border-left-color: var(--bs-primary);
+                background: var(--bs-primary-bg-subtle);
+            }
+        }
+    </style>
     @stack('styles')
 </head>
 
 <body class="bg-body-tertiary">
 
-    {{-- Thanh điều hướng ngang --}}
-    <nav class="navbar navbar-dark bg-dark sticky-top shadow-sm">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center gap-2">
-                {{-- Nút đóng/mở menu bên trái --}}
-                <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="offcanvas"
-                    data-bs-target="#adminMenu" aria-controls="adminMenu" title="Mở menu">
-                    <i class="bi bi-list fs-5"></i>
-                </button>
-                <a class="navbar-brand mb-0 ms-1" href="{{ route('admin.dashboard') }}">
+    <header class="sticky-top shadow-sm">
+
+        {{-- ===== Thanh đen trên cùng ===== --}}
+        <nav class="navbar navbar-dark bg-dark py-2">
+            <div class="container-fluid px-3 px-md-4">
+                <a class="navbar-brand mb-0" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-speedometer2 text-warning"></i> Quản trị
                 </a>
+
+                <div class="d-flex align-items-center gap-2 gap-md-3">
+                    <a class="text-white-50 text-decoration-none small d-none d-md-inline" href="{{ route('home') }}"
+                        target="_blank">
+                        <i class="bi bi-box-arrow-up-right"></i> Xem website
+                    </a>
+                    <span class="text-white small d-none d-md-inline">{{ auth()->user()->name }}</span>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="btn btn-outline-light btn-sm" title="Đăng xuất">
+                            <i class="bi bi-box-arrow-right"></i> <span class="d-none d-sm-inline">Đăng xuất</span>
+                        </button>
+                    </form>
+
+                    {{-- Nút mũi tên: mở/đóng menu (điện thoại) --}}
+                    <button class="menu-toggle btn btn-outline-light btn-sm d-lg-none" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#adminMenu" aria-controls="adminMenu"
+                        aria-expanded="false" aria-label="Mở menu">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
             </div>
+        </nav>
 
-            <div class="d-flex align-items-center gap-3">
-                <a class="text-white-50 text-decoration-none small d-none d-sm-inline" href="{{ route('home') }}"
-                    target="_blank">
-                    <i class="bi bi-box-arrow-up-right"></i> Xem website
-                </a>
-                <span class="text-white small d-none d-md-inline">{{ auth()->user()->name }}</span>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="btn btn-outline-light btn-sm">Đăng xuất</button>
-                </form>
-            </div>
+        {{-- ===== Menu: máy tính hiện sẵn dưới thanh đen, điện thoại bấm mũi tên để trượt xuống ===== --}}
+        <div class="collapse d-lg-block" id="adminMenu">
+            <nav class="admin-menu bg-body border-bottom" aria-label="Menu quản trị">
+                <div class="container-fluid px-3 px-md-4">
+                    <ul class="nav flex-column flex-lg-row flex-lg-wrap">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                                href="{{ route('admin.dashboard') }}">
+                                <i class="bi bi-house"></i> Tổng quan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.comics.*', 'admin.chapters.*') ? 'active' : '' }}"
+                                href="{{ route('admin.comics.index') }}">
+                                <i class="bi bi-journal-richtext"></i> Truyện &amp; chương
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
+                                href="{{ route('admin.categories.index') }}">
+                                <i class="bi bi-tags"></i> Thể loại
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.authors.*') ? 'active' : '' }}"
+                                href="{{ route('admin.authors.index') }}">
+                                <i class="bi bi-person-lines-fill"></i> Tác giả
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.comments.*') ? 'active' : '' }}"
+                                href="{{ route('admin.comments.index') }}">
+                                <i class="bi bi-chat-dots"></i> Bình luận
+                            </a>
+                        </li>
+                        @if (Route::has('admin.imports.index'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.imports.*') ? 'active' : '' }}"
+                                href="{{ route('admin.imports.index') }}">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> Nhập dữ liệu Excel
+                            </a>
+                        </li>
+                        @endif
+
+                        {{-- Điện thoại: liên kết "Xem website" ở thanh đen bị ẩn nên đưa vào menu --}}
+                        <li class="nav-item d-md-none">
+                            <a class="nav-link" href="{{ route('home') }}" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> Xem website
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
         </div>
-    </nav>
+    </header>
 
-    {{-- Menu trượt từ bên trái --}}
-    <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="adminMenu" aria-labelledby="adminMenuLabel">
-        <div class="offcanvas-header border-bottom border-secondary">
-            <h5 class="offcanvas-title" id="adminMenuLabel">
-                <i class="bi bi-book-half text-warning"></i> {{ config('app.name') }}
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
-                aria-label="Đóng"></button>
-        </div>
-
-        <div class="offcanvas-body">
-            <ul class="nav nav-pills flex-column gap-1">
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : 'text-white' }}"
-                        href="{{ route('admin.dashboard') }}">
-                        <i class="bi bi-house me-2"></i> Tổng quan
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.comics.*', 'admin.chapters.*') ? 'active' : 'text-white' }}"
-                        href="{{ route('admin.comics.index') }}">
-                        <i class="bi bi-journal-richtext me-2"></i> Truyện &amp; chương
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : 'text-white' }}"
-                        href="{{ route('admin.categories.index') }}">
-                        <i class="bi bi-tags me-2"></i> Thể loại
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.authors.*') ? 'active' : 'text-white' }}"
-                        href="{{ route('admin.authors.index') }}">
-                        <i class="bi bi-person-lines-fill me-2"></i> Tác giả
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.imports.*') ? 'active' : 'text-white' }}"
-                        href="{{ route('admin.imports.index') }}">
-                        <i class="bi bi-file-earmark-spreadsheet me-2"></i> Nhập dữ liệu Excel
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.comments.*') ? 'active' : 'text-white' }}"
-                        href="{{ route('admin.comments.index') }}">
-                        <i class="bi bi-chat-dots me-2"></i> Bình luận
-                    </a>
-                </li>
-            </ul>
-
-            <hr class="border-secondary my-3">
-
-            <a class="nav-link text-white-50" href="{{ route('home') }}" target="_blank">
-                <i class="bi bi-box-arrow-up-right me-2"></i> Xem website
-            </a>
-        </div>
-    </div>
-
-    {{-- Nội dung chiếm toàn bộ chiều rộng --}}
+    {{-- Nội dung chiếm toàn bộ chiều rộng (không còn thanh bên trái) --}}
     <main class="container-fluid px-3 px-md-4 py-4">
         @include('partials.flash')
         @yield('content')
