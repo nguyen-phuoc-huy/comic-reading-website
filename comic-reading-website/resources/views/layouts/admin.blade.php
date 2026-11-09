@@ -23,7 +23,7 @@
                     <i class="bi bi-list fs-5"></i>
                 </button>
                 <a class="navbar-brand mb-0 ms-1" href="{{ route('admin.dashboard') }}">
-                    <i class="bi bi-speedometer2 text-warning"></i> TRANG QUẢN TRỊ
+                    <i class="bi bi-speedometer2 text-warning"></i> Quản trị
                 </a>
             </div>
 
@@ -75,6 +75,12 @@
                     <a class="nav-link {{ request()->routeIs('admin.authors.*') ? 'active' : 'text-white' }}"
                         href="{{ route('admin.authors.index') }}">
                         <i class="bi bi-person-lines-fill me-2"></i> Tác giả
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.imports.*') ? 'active' : 'text-white' }}"
+                        href="{{ route('admin.imports.index') }}">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i> Nhập dữ liệu Excel
                     </a>
                 </li>
                 <li class="nav-item">

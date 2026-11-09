@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\ChapterController as AdminChapterController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\AuthorController as AdminAuthorController;
 use App\Http\Controllers\Admin\CommentController as AdminCommentController;
+use App\Http\Controllers\Admin\ImportController as AdminImportController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -97,6 +99,11 @@ Route::prefix('admin')
         // Quản lý bình luận
         Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
         Route::delete('comments/{comment}', [AdminCommentController::class, 'destroy'])->name('comments.destroy');
+
+        // Nhập dữ liệu từ Excel
+        Route::get('imports', [AdminImportController::class, 'index'])->name('imports.index');
+        Route::post('imports/{type}', [AdminImportController::class, 'store'])->name('imports.store');
+        Route::get('imports/{type}/template', [AdminImportController::class, 'template'])->name('imports.template');
     });
 
 /*
