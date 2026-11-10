@@ -1,96 +1,112 @@
 @extends('layouts.site')
 
-@section('title', 'Hồ sơ - ' . config('app.name'))
+@section('title', 'Hồ sơ của tôi - ' . config('app.name'))
 
 @section('content')
-@php $user = auth()->user(); @endphp
+<h4 class="fw-bold mb-4"><i class="bi bi-person-gear"></i> Hồ sơ của tôi</h4>
 
-<div class="row justify-content-center">
-    <div class="col-lg-7">
-        <h4 class="fw-bold mb-3"><i class="bi bi-person-gear"></i> Hồ sơ của tôi</h4>
+<div class="row g-4">
+    {{-- Thẻ thông tin tổng quan --}}
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fs-1 fw-bold mb-3"
+                    style="width:96px;height:96px">
+                    {{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}
+                </div>
+                <h5 class="fw-bold mb-1">{{ $user->name }}</h5>
+                <div class="text-muted small mb-2">{{ $user->email }}</div>
+                @if ($user->role === 'admin')
+                <span class="badge text-bg-danger">Quản trị viên</span>
+                @else
+                <span class="badge text-bg-secondary">Thành viên</span>
+                @endif
+                <div class="text-muted small mt-2">
+                    <i class="bi bi-calendar-check"></i> Tham gia {{ $user->created_at?->format('d/m/Y') }}
+                </div>
+            </div>
 
+            <div class="list-group list-group-flush">
+                <a href="{{ route('follows.index') }}"
+                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-heart text-danger"></i> Truyện đang theo dõi</span>
+                    <span class="badge text-bg-light border">{{ $stats['follows'] }}</span>
+                </a>
+                <a href="{{ route('history.index') }}"
+                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history text-primary"></i> Truyện đã đọc</span>
+                    <span class="badge text-bg-light border">{{ $stats['histories'] }}</span>
+                </a>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-chat-dots text-success"></i> Bình luận đã đăng</span>
+                    <span class="badge text-bg-light border">{{ $stats['comments'] }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
         {{-- Thông tin cá nhân --}}
         <div class="card shadow-sm mb-4">
-            <div class="card-header fw-semibold">Thông tin cá nhân</div>
+            <div class="card-header fw-semibold">Thông tin tài khoản</div>
             <div class="card-body">
-                @if (session('status') === 'profile-updated')
-                    <div class="alert alert-success">Đã lưu thông tin.</div>
-                @endif
-
                 <form method="POST" action="{{ route('profile.update') }}">
                     @csrf
-                    @method('PATCH')
+                    @method('PUT')
+
                     <div class="mb-3">
                         <label class="form-label">Tên hiển thị</label>
-                        <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                               class="form-control @error('name') is-invalid @enderror">
+                        <input type="text" name="name" value="{{ old('name', $user->name) }}" required maxlength="255"
+                            class="form-control @error('name') is-invalid @enderror">
                         @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                               class="form-control @error('email') is-invalid @enderror">
+                            maxlength="255" class="form-control @error('email') is-invalid @enderror">
                         @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <button class="btn btn-primary">Lưu thay đổi</button>
+
+                    <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Lưu thay đổi</button>
                 </form>
             </div>
         </div>
 
         {{-- Đổi mật khẩu --}}
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm">
             <div class="card-header fw-semibold">Đổi mật khẩu</div>
             <div class="card-body">
-                @if (session('status') === 'password-updated')
-                    <div class="alert alert-success">Đã đổi mật khẩu.</div>
-                @endif
-
-                <form method="POST" action="{{ route('password.update') }}">
+                <form method="POST" action="{{ route('profile.password') }}">
                     @csrf
                     @method('PUT')
+
                     <div class="mb-3">
                         <label class="form-label">Mật khẩu hiện tại</label>
-                        <input type="password" name="current_password" autocomplete="current-password"
-                               class="form-control @error('current_password', 'updatePassword') is-invalid @enderror">
-                        @error('current_password', 'updatePassword')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <input type="password" name="current_password" autocomplete="current-password" required
+                            class="form-control @error('current_password', 'updatePassword') is-invalid @enderror">
+                        @error('current_password', 'updatePassword')<div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Mật khẩu mới</label>
-                        <input type="password" name="password" autocomplete="new-password"
-                               class="form-control @error('password', 'updatePassword') is-invalid @enderror">
-                        @error('password', 'updatePassword')<div class="invalid-feedback">{{ $message }}</div>@enderror
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Mật khẩu mới</label>
+                            <input type="password" name="password" autocomplete="new-password" required minlength="8"
+                                class="form-control @error('password', 'updatePassword') is-invalid @enderror">
+                            @error('password', 'updatePassword')<div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">Tối thiểu 8 ký tự.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nhập lại mật khẩu mới</label>
+                            <input type="password" name="password_confirmation" autocomplete="new-password" required
+                                class="form-control">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nhập lại mật khẩu mới</label>
-                        <input type="password" name="password_confirmation" autocomplete="new-password" class="form-control">
-                    </div>
-                    <button class="btn btn-primary">Đổi mật khẩu</button>
+
+                    <button class="btn btn-primary"><i class="bi bi-key"></i> Đổi mật khẩu</button>
                 </form>
-            </div>
-        </div>
-
-        {{-- Xóa tài khoản --}}
-        <div class="card border-danger shadow-sm">
-            <div class="card-header text-danger fw-semibold">Xóa tài khoản</div>
-            <div class="card-body">
-                <p class="text-muted small">Khi xóa, toàn bộ dữ liệu của bạn (theo dõi, lịch sử, bình luận) sẽ bị xóa vĩnh viễn.</p>
-
-                <button class="btn btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#deleteAccount"
-                        aria-expanded="{{ $errors->userDeletion->isNotEmpty() ? 'true' : 'false' }}">
-                    Xóa tài khoản của tôi
-                </button>
-
-                <div class="collapse mt-3 {{ $errors->userDeletion->isNotEmpty() ? 'show' : '' }}" id="deleteAccount">
-                    <form method="POST" action="{{ route('profile.destroy') }}">
-                        @csrf
-                        @method('DELETE')
-                        <label class="form-label">Nhập mật khẩu để xác nhận</label>
-                        <input type="password" name="password"
-                               class="form-control mb-2 @error('password', 'userDeletion') is-invalid @enderror">
-                        @error('password', 'userDeletion')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <button class="btn btn-danger">Xác nhận xóa</button>
-                    </form>
-                </div>
             </div>
         </div>
     </div>

@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ComicController;
@@ -10,6 +12,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\ProfileController;
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ComicController as AdminComicController;
@@ -18,11 +21,15 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\AuthorController as AdminAuthorController;
 use App\Http\Controllers\Admin\CommentController as AdminCommentController;
 use App\Http\Controllers\Admin\ImportController as AdminImportController;
-
-use Illuminate\Support\Facades\Storage;
-
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 
+/*
+|--------------------------------------------------------------------------
+| Trả ảnh trong storage/app/public
+| (dùng khi website chạy không qua thư mục public, nên storage:link không có tác dụng)
+| Nhớ đặt 'serve' => false cho ổ đĩa 'local' trong config/filesystems.php
+|--------------------------------------------------------------------------
+*/
 
 Route::get('storage/{path}', function (string $path) {
     abort_if(str_contains($path, '..'), 404);
@@ -35,7 +42,6 @@ Route::get('storage/{path}', function (string $path) {
     ]);
 })->where('path', '.*')->name('storage.serve');
 
-
 /*
 |--------------------------------------------------------------------------
 | Routes dành cho người đọc (công khai)
@@ -44,6 +50,10 @@ Route::get('storage/{path}', function (string $path) {
 
 // Trang chủ
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Laravel UI chuyển hướng về /home sau khi đăng nhập/đăng ký: đưa về trang chủ.
+// Dùng redirect()->route() (không dùng Route::redirect) để địa chỉ có kèm thư mục con của WAMP.
+Route::get('/home', fn() => redirect()->route('home'));
 
 // Danh sách truyện (lọc theo trạng thái, sắp xếp...)
 Route::get('/truyen', [ComicController::class, 'index'])->name('comics.index');
@@ -69,6 +79,11 @@ Route::get('/tim-kiem', [SearchController::class, 'index'])->name('search');
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
+
+    // Hồ sơ cá nhân: xem, cập nhật tên/email, đổi mật khẩu
+    Route::get('/ho-so', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/ho-so', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/ho-so/mat-khau', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Theo dõi truyện
     Route::get('/theo-doi', [FollowController::class, 'index'])->name('follows.index');
@@ -112,13 +127,12 @@ Route::prefix('admin')
         Route::resource('categories', AdminCategoryController::class)->except(['show']);
         Route::resource('authors', AdminAuthorController::class)->except(['show']);
 
-        // Quản lý người dùng
-        Route::resource('users', AdminUserController::class)->except(['show']);
-        
-
         // Quản lý bình luận
         Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
         Route::delete('comments/{comment}', [AdminCommentController::class, 'destroy'])->name('comments.destroy');
+
+        // Quản lý người dùng
+        Route::resource('users', AdminUserController::class)->except(['show']);
 
         // Nhập dữ liệu từ Excel
         Route::get('imports', [AdminImportController::class, 'index'])->name('imports.index');
@@ -128,12 +142,7 @@ Route::prefix('admin')
 
 /*
 |--------------------------------------------------------------------------
-| Routes đăng nhập / đăng ký (Laravel Breeze)
+| Routes đăng nhập / đăng ký / quên mật khẩu (Laravel UI)
 |--------------------------------------------------------------------------
 */
-
-//require __DIR__ . '/auth.php';
-
 Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

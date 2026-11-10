@@ -151,6 +151,22 @@
                 margin-bottom: .5rem;
             }
         }
+
+        /* ===== Thanh đầu trang tự ẩn khi cuộn xuống, hiện lại khi cuộn lên ===== */
+        .site-header {
+            transition: transform .3s ease;
+            will-change: transform;
+        }
+
+        .site-header.header-hidden {
+            transform: translateY(-100%);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .site-header {
+                transition: none;
+            }
+        }
     </style>
     @stack('styles')
 </head>
@@ -166,7 +182,7 @@
     $qSort = request('sort');
     @endphp
 
-    <header class="sticky-top shadow-sm">
+    <header id="siteHeader" class="site-header sticky-top shadow-sm">
 
         {{-- ===== Thanh 1: tên website (trang chủ) + tìm kiếm + tài khoản ===== --}}
         <nav class="top-bar navbar navbar-dark bg-dark py-2">
@@ -205,11 +221,38 @@
                                 }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            @if (Route::has('profile.edit'))
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-gear"></i>
-                                    Hồ sơ</a></li>
-                            @endif
+                            <li>
+                                <h6 class="dropdown-header text-truncate" style="max-width:240px">
+                                    {{ auth()->user()->name }}
+                                    <span class="d-block fw-normal text-muted small text-truncate">{{
+                                        auth()->user()->email }}</span>
+                                </h6>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('profile.*') ? 'active' : '' }}"
+                                    href="{{ route('profile.edit') }}">
+                                    <i class="bi bi-person-gear"></i> Hồ sơ của tôi
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('follows.*') ? 'active' : '' }}"
+                                    href="{{ route('follows.index') }}">
+                                    <i class="bi bi-heart"></i> Truyện theo dõi
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('history.*') ? 'active' : '' }}"
+                                    href="{{ route('history.index') }}">
+                                    <i class="bi bi-clock-history"></i> Lịch sử đọc
+                                </a>
+                            </li>
                             @if (auth()->user()->role === 'admin')
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
                             <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i
                                         class="bi bi-speedometer2"></i> Trang quản trị</a></li>
                             @endif
@@ -295,20 +338,6 @@
                             </a>
                         </li>
 
-                        @auth
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('follows.*') ? 'active' : '' }}"
-                                href="{{ route('follows.index') }}">
-                                <i class="bi bi-heart"></i> Theo dõi
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('history.*') ? 'active' : '' }}"
-                                href="{{ route('history.index') }}">
-                                <i class="bi bi-clock-history"></i> Lịch sử đọc
-                            </a>
-                        </li>
-                        @endauth
 
                         {{-- Điện thoại nhỏ: nút Đăng ký ở thanh trên bị ẩn nên đưa vào menu --}}
                         @guest
@@ -337,6 +366,50 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+        var header = document.getElementById('siteHeader');
+        if (!header) return;
+
+        var lastY = window.pageYOffset;
+        var ticking = false;
+
+        // Không ẩn khi đang mở menu/ danh sách xổ xuống hoặc đang gõ trong ô tìm kiếm
+        function keepVisible() {
+            if (header.querySelector('.dropdown-menu.show, .collapse.show')) return true;
+            var el = document.activeElement;
+            return !!(el && header.contains(el) && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+        }
+
+        function update() {
+            var y = Math.max(window.pageYOffset, 0);
+            var delta = y - lastY;
+
+            if (y <= header.offsetHeight) {
+                header.classList.remove('header-hidden');          // gần đầu trang: luôn hiện
+            } else if (Math.abs(delta) > 6) {
+                if (delta > 0 && !keepVisible()) {
+                    header.classList.add('header-hidden');         // cuộn xuống: ẩn
+                } else if (delta < 0) {
+                    header.classList.remove('header-hidden');      // cuộn lên: hiện
+                }
+            }
+
+            if (Math.abs(delta) > 6) lastY = y;
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', function () {
+            if (!ticking) {
+                window.requestAnimationFrame(update);
+                ticking = true;
+            }
+        }, { passive: true });
+
+        // Khi bấm vào ô tìm kiếm hoặc mở menu thì đảm bảo thanh đang hiện
+        header.addEventListener('focusin', function () { header.classList.remove('header-hidden'); });
+    })();
+    </script>
     @stack('scripts')
 </body>
 
