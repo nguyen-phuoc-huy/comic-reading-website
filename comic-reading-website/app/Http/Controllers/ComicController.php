@@ -15,7 +15,7 @@ class ComicController extends Controller
         $statuses = ['ongoing', 'completed', 'dropped'];
 
         $query = Comic::query()
-            ->with('author')
+            ->with(['author', 'latestChapters'])
             ->withMax('chapters as latest_chapter_number', 'number');
 
         if (in_array($request->status, $statuses, true)) {
@@ -23,7 +23,7 @@ class ComicController extends Controller
         }
 
         if ($request->filled('category')) {
-            $query->whereHas('categories', fn ($q) => $q->where('slug', $request->category));
+            $query->whereHas('categories', fn($q) => $q->where('slug', $request->category));
         }
 
         match ($request->input('sort')) {
@@ -67,7 +67,7 @@ class ComicController extends Controller
             ->whereNull('parent_id')
             ->with([
                 'user',
-                'replies' => fn ($q) => $q->with('user')->oldest(),
+                'replies' => fn($q) => $q->with('user')->oldest(),
             ])
             ->latest()
             ->paginate(10, ['*'], 'comments_page');
@@ -76,8 +76,9 @@ class ComicController extends Controller
         $categoryIds = $comic->categories->pluck('id');
 
         $relatedComics = Comic::query()
+            ->with('latestChapters')
             ->where('id', '!=', $comic->id)
-            ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $categoryIds))
+            ->whereHas('categories', fn($q) => $q->whereIn('categories.id', $categoryIds))
             ->inRandomOrder()
             ->take(6)
             ->get();

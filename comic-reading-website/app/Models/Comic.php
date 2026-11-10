@@ -48,6 +48,17 @@ class Comic extends Model
         return $this->hasMany(Chapter::class)->orderByDesc('number');
     }
 
+    /**
+     * 3 chương mới nhất (số chương lớn nhất) của truyện.
+     * Dùng with('latestChapters') để nạp cho cả danh sách chỉ bằng 1 truy vấn.
+     */
+    public function latestChapters(): HasMany
+    {
+        return $this->hasMany(Chapter::class)
+            ->whereRaw('(select count(*) from chapters as c2 where c2.comic_id = chapters.comic_id and c2.number > chapters.number) < 3')
+            ->orderByDesc('number');
+    }
+
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);

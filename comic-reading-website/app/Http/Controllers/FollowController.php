@@ -12,7 +12,7 @@ class FollowController extends Controller
     {
         $comics = $request->user()
             ->followedComics()
-            ->with('author')
+            ->with(['author', 'latestChapters'])
             ->withMax('chapters as latest_chapter_number', 'number')
             ->withMax('chapters as latest_chapter_at', 'created_at')
             ->orderByPivot('created_at', 'desc')

@@ -22,7 +22,7 @@ class SearchController extends Controller
             $like = '%' . addcslashes($keyword, '%_\\') . '%';
 
             $comics = Comic::query()
-                ->with('author')
+                ->with(['author', 'latestChapters'])
                 ->withMax('chapters as latest_chapter_number', 'number')
                 ->where(function ($q) use ($like) {
                     $q->where('title', 'like', $like)

@@ -55,7 +55,7 @@
                             class="fs-4 fw-bold text-center {{ $loop->iteration <= 3 ? 'text-danger' : 'text-secondary' }}"
                             style="width:2rem">{{ $loop->iteration }}</span>
                         <img src="{{ $top->cover ? asset('storage/' . $top->cover) : 'https://placehold.co/300x400?text=No' }}"
-                            alt="" class="rounded" style="width:48px;height:64px;object-fit:cover">
+                            alt="" class="rounded" style="width:90px;height:120px;object-fit:cover">
                         <div class="flex-grow-1" style="min-width:0">
                             <div class="fw-semibold text-truncate">{{ $top->title }}</div>
                             <small class="text-muted">

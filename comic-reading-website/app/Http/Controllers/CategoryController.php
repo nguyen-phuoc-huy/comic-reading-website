@@ -23,7 +23,7 @@ class CategoryController extends Controller
         $statuses = ['ongoing', 'completed', 'dropped'];
 
         $query = $category->comics()
-            ->with('author')
+            ->with(['author', 'latestChapters'])
             ->withMax('chapters as latest_chapter_number', 'number');
 
         if (in_array($request->status, $statuses, true)) {
