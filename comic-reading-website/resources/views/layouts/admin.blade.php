@@ -128,6 +128,12 @@
                                 <i class="bi bi-chat-dots"></i> Bình luận
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
+                                href="{{ route('admin.users.index') }}">
+                                <i class="bi bi-people"></i> Người dùng
+                            </a>
+                        </li>
                         @if (Route::has('admin.imports.index'))
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.imports.*') ? 'active' : '' }}"

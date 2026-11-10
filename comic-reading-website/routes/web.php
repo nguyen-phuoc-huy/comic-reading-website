@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\ImportController as AdminImportController;
 
 use Illuminate\Support\Facades\Storage;
 
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+
 
 Route::get('storage/{path}', function (string $path) {
     abort_if(str_contains($path, '..'), 404);
@@ -109,6 +111,10 @@ Route::prefix('admin')
         // Thể loại, tác giả
         Route::resource('categories', AdminCategoryController::class)->except(['show']);
         Route::resource('authors', AdminAuthorController::class)->except(['show']);
+
+        // Quản lý người dùng
+        Route::resource('users', AdminUserController::class)->except(['show']);
+        
 
         // Quản lý bình luận
         Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
