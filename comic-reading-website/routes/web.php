@@ -7,12 +7,14 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ComicController;
 use App\Http\Controllers\ChapterController;
+use App\Http\Controllers\ChapterDownloadController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\GoogleController;
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ComicController as AdminComicController;
@@ -65,6 +67,12 @@ Route::get('/truyen/{comic:slug}', [ComicController::class, 'show'])->name('comi
 Route::get('/truyen/{comic:slug}/chap-{chapter:number}', [ChapterController::class, 'show'])
     ->where('chapter', '[0-9]+(\.[0-9]+)?')
     ->name('chapters.show');
+
+// Tải chương về dạng PDF (giới hạn 10 lần / phút để tránh bị lạm dụng)
+Route::get('/truyen/{comic:slug}/chap-{chapter:number}/tai-pdf', ChapterDownloadController::class)
+    ->where('chapter', '[0-9]+(\.[0-9]+)?')
+    ->middleware('throttle:10,1')
+    ->name('chapters.download');
 
 // Thể loại
 Route::get('/the-loai', [CategoryController::class, 'index'])->name('categories.index');
@@ -145,4 +153,10 @@ Route::prefix('admin')
 | Routes đăng nhập / đăng ký / quên mật khẩu (Laravel UI)
 |--------------------------------------------------------------------------
 */
+// Đăng nhập bằng Google
+// Route::middleware('guest')->group(function () {
+//     Route::get('auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
+//     Route::get('auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
+// });
+
 Auth::routes();

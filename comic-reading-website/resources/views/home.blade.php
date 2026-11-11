@@ -117,7 +117,7 @@
 </section>
 
 {{-- Truyện hoàn thành --}}
-@if ($completedComics->isNotEmpty())
+{{-- @if ($completedComics->isNotEmpty())
 <section class="mt-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0"><i class="bi bi-check-circle-fill text-success"></i> Truyện đã hoàn thành</h5>
@@ -129,7 +129,7 @@
         @endforeach
     </div>
 </section>
-@endif
+@endif --}}
 
 @endsection
 

@@ -11,7 +11,8 @@
         "laravel/socialite": "^5.32",
         "laravel/tinker": "^3.0",
         "laravel/ui": "^4.6",
-        "phpoffice/phpspreadsheet": "^5.11"
+        "phpoffice/phpspreadsheet": "^5.11",
+        "setasign/fpdf": "^1.9"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
