@@ -4,6 +4,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        (function () {
+            var pref = 'auto';
+            try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'light' || saved === 'dark') pref = saved;
+            } catch (e) {}
+            var theme = pref === 'auto'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : pref;
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -167,6 +180,40 @@
                 transition: none;
             }
         }
+
+        /* ===== Chế độ sáng / tối ===== */
+        /* Các lớp màu cố định trong view: cho đổi màu theo chế độ tối */
+        [data-bs-theme="dark"] .text-dark {
+            color: var(--bs-body-color) !important;
+        }
+
+        [data-bs-theme="dark"] .text-bg-light {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        /* ===== Nút mũi tên lên đầu trang ===== */
+        .back-to-top {
+            position: fixed;
+            right: 1.25rem;
+            bottom: 1.25rem;
+            z-index: 1030;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px);
+            transition: opacity .25s, transform .25s, visibility .25s;
+        }
+
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: none;
+        }
     </style>
     @stack('styles')
 </head>
@@ -203,6 +250,38 @@
 
                 {{-- Tài khoản + nút mũi tên mở menu (điện thoại) --}}
                 <div class="order-2 order-lg-3 ms-auto d-flex align-items-center gap-2">
+                    {{-- Chọn chế độ giao diện: Sáng / Tối / Theo hệ thống --}}
+                    <div class="dropdown">
+                        <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light"
+                            data-bs-toggle="dropdown" aria-expanded="false" title="Chọn giao diện"
+                            aria-label="Chọn giao diện">
+                            <i id="themeIcon" class="bi bi-circle-half"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" id="themeMenu">
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                                    data-theme-choice="light">
+                                    <i class="bi bi-sun-fill"></i> Sáng <i
+                                        class="bi bi-check2 ms-auto theme-check d-none"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                                    data-theme-choice="dark">
+                                    <i class="bi bi-moon-stars-fill"></i> Tối <i
+                                        class="bi bi-check2 ms-auto theme-check d-none"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item d-flex align-items-center gap-2"
+                                    data-theme-choice="auto">
+                                    <i class="bi bi-circle-half"></i> Theo hệ thống <i
+                                        class="bi bi-check2 ms-auto theme-check d-none"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
                     @guest
                     @if (Route::has('login'))
                     <a class="btn btn-sm btn-outline-light" href="{{ route('login') }}">
@@ -217,8 +296,13 @@
                     <div class="dropdown">
                         <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> <span class="d-none d-sm-inline">{{ auth()->user()->name
-                                }}</span>
+                            @if (auth()->user()->avatar)
+                            <img src="{{ auth()->user()->avatar }}" alt="" width="20" height="20" class="rounded-circle"
+                                referrerpolicy="no-referrer">
+                            @else
+                            <i class="bi bi-person-circle"></i>
+                            @endif
+                            <span class="d-none d-sm-inline">{{ auth()->user()->name }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
@@ -365,6 +449,11 @@
         </div>
     </footer>
 
+    <button type="button" id="backToTop" class="back-to-top btn btn-primary rounded-circle shadow p-0"
+        title="Lên đầu trang" aria-label="Lên đầu trang">
+        <i class="bi bi-arrow-up fs-5"></i>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (function () {
@@ -408,6 +497,68 @@
 
         // Khi bấm vào ô tìm kiếm hoặc mở menu thì đảm bảo thanh đang hiện
         header.addEventListener('focusin', function () { header.classList.remove('header-hidden'); });
+    })();
+    </script>
+    <script>
+        // Chọn chế độ giao diện: sáng / tối / theo hệ thống, ghi nhớ lựa chọn
+    (function () {
+        var root = document.documentElement;
+        var menu = document.getElementById('themeMenu');
+        var icon = document.getElementById('themeIcon');
+        if (!menu || !icon) return;
+
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var icons = { light: 'bi-sun-fill', dark: 'bi-moon-stars-fill', auto: 'bi-circle-half' };
+
+        function getPref() {
+            try {
+                var saved = localStorage.getItem('theme');
+                return (saved === 'light' || saved === 'dark') ? saved : 'auto';
+            } catch (e) { return 'auto'; }
+        }
+
+        function apply(pref) {
+            root.setAttribute('data-bs-theme', pref === 'auto' ? (mq.matches ? 'dark' : 'light') : pref);
+            icon.className = 'bi ' + icons[pref];
+            menu.querySelectorAll('[data-theme-choice]').forEach(function (item) {
+                var on = item.getAttribute('data-theme-choice') === pref;
+                item.querySelector('.theme-check').classList.toggle('d-none', !on);
+                item.classList.toggle('fw-semibold', on);
+            });
+        }
+
+        menu.addEventListener('click', function (e) {
+            var item = e.target.closest('[data-theme-choice]');
+            if (!item) return;
+            var pref = item.getAttribute('data-theme-choice');
+            try {
+                if (pref === 'auto') localStorage.removeItem('theme');
+                else localStorage.setItem('theme', pref);
+            } catch (err) {}
+            apply(pref);
+        });
+
+        // Đang ở chế độ "Theo hệ thống": đổi theo khi thiết bị đổi sáng/tối
+        var onSystemChange = function () { if (getPref() === 'auto') apply('auto'); };
+        if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
+        else if (mq.addListener) mq.addListener(onSystemChange);
+
+        apply(getPref());
+    })();
+
+    // Nút mũi tên: hiện khi đã cuộn xuống, bấm để trượt lên đầu trang
+    (function () {
+        var btn = document.getElementById('backToTop');
+        if (!btn) return;
+
+        function toggle() { btn.classList.toggle('show', window.pageYOffset > 300); }
+        window.addEventListener('scroll', toggle, { passive: true });
+        toggle();
+
+        btn.addEventListener('click', function () {
+            var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+        });
     })();
     </script>
     @stack('scripts')
