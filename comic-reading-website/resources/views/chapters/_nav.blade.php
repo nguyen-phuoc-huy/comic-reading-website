@@ -18,6 +18,15 @@
     }
 </style>
 
+{{-- <div>
+    <a href="{{ route('chapters.download', [$comic, $chapter]) }}"
+        class="btn btn-danger btn-sm fw-bold shadow-sm btn-download-pdf" title="Tải chương này về (PDF)">
+        <i class="bi bi-file-earmark-pdf-fill me-1"></i>
+        <span>Tải PDF</span>
+        <i class="bi bi-download ms-1"></i>
+    </a>
+</div> --}}
+
 <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 my-3">
     @if ($prevChapter)
     <a href="{{ route('chapters.show', [$comic, $prevChapter]) }}" class="btn btn-secondary btn-sm">

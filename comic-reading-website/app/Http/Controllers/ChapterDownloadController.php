@@ -27,7 +27,7 @@ class ChapterDownloadController extends Controller
         @ini_set('memory_limit', '512M');
 
         $disk  = Storage::disk('public');
-        $files = $chapter->images()->get()->filter(fn ($image) => $disk->exists($image->image_path));
+        $files = $chapter->images()->get()->filter(fn($image) => $disk->exists($image->image_path));
 
         if ($files->isEmpty()) {
             return back()->with('error', 'Chương này chưa có ảnh để tải.');
@@ -35,7 +35,7 @@ class ChapterDownloadController extends Controller
 
         // File PDF được lưu đệm lại; đổi ảnh của chương thì chữ ký đổi và PDF được tạo lại
         $signature = md5($chapter->id . '|' . $files->map(
-            fn ($i) => $i->id . ':' . $i->image_path . ':' . $i->order
+            fn($i) => $i->id . ':' . $i->image_path . ':' . $i->order . ':' . $i->updated_at?->timestamp
         )->implode(','));
 
         $dir = storage_path('app/pdf-cache');

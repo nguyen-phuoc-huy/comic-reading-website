@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\Category;
 use App\Models\Comic;
+use App\Services\ComicStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ComicController extends Controller
@@ -33,17 +33,20 @@ class ComicController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ComicStorage $storage)
     {
         $data = $this->validated($request);
+        unset($data['cover'], $data['categories']);
 
         $data['slug'] = $this->uniqueSlug($data['title']);
 
+        $comic = Comic::create($data);
+
+        // Ảnh bìa: comics/{slug}/{slug}-cover.jpg
         if ($request->hasFile('cover')) {
-            $data['cover'] = $request->file('cover')->store('covers', 'public');
+            $comic->update(['cover' => $storage->storeCover($comic, $request->file('cover'))]);
         }
 
-        $comic = Comic::create($data);
         $comic->categories()->sync($request->input('categories', []));
 
         return redirect()->route('admin.comics.index')
@@ -59,29 +62,54 @@ class ComicController extends Controller
         ]);
     }
 
-    public function update(Request $request, Comic $comic)
+    public function update(Request $request, Comic $comic, ComicStorage $storage)
     {
         $data = $this->validated($request);
+        unset($data['cover'], $data['categories']);
 
-        // Giữ nguyên slug cũ để không làm hỏng đường dẫn đã có
+        // Mặc định giữ nguyên slug (không đổi liên kết cũ). Chỉ đổi khi tích chọn và tên truyện thực sự đổi.
+        $renameSlug = $request->boolean('rename_slug') && $data['title'] !== $comic->title;
+        if ($renameSlug) {
+            $data['slug'] = $this->uniqueSlug($data['title'], $comic->id);
+        }
 
-        if ($request->hasFile('cover')) {
-            if ($comic->cover) {
-                Storage::disk('public')->delete($comic->cover);
-            }
-            $data['cover'] = $request->file('cover')->store('covers', 'public');
+        $newCover = $request->file('cover');
+        if ($newCover) {
+            $storage->deleteCover($comic);
         }
 
         $comic->update($data);
+
+        if ($newCover) {
+            $comic->update(['cover' => $storage->storeCover($comic, $newCover)]);
+        }
+
         $comic->categories()->sync($request->input('categories', []));
 
+        // Đổi slug -> chuyển thư mục và đổi tên toàn bộ ảnh theo tên mới
+        if ($renameSlug) {
+            $storage->organizeComic($comic->refresh());
+        }
+
         return redirect()->route('admin.comics.index')
-            ->with('success', 'Đã cập nhật truyện.');
+            ->with('success', $renameSlug
+                ? 'Đã cập nhật truyện, đổi đường dẫn và thư mục ảnh theo tên mới.'
+                : 'Đã cập nhật truyện.');
+    }
+
+    // POST admin/comics/{comic}/organize
+    public function organize(Comic $comic, ComicStorage $storage)
+    {
+        @set_time_limit(300);
+
+        $report = $storage->organizeComic($comic);
+
+        return back()->with('success', "Đã chuẩn hóa {$report['images']} ảnh trong {$report['chapters']} chương vào thư mục comics/{$comic->slug}.");
     }
 
     public function destroy(Comic $comic)
     {
-        // Xóa mềm (SoftDeletes), có thể khôi phục sau này
+        // Xóa mềm (SoftDeletes), có thể khôi phục sau này, giữ nguyên ảnh
         $comic->delete();
 
         return redirect()->route('admin.comics.index')
@@ -102,13 +130,16 @@ class ComicController extends Controller
         ]);
     }
 
-    private function uniqueSlug(string $title): string
+    private function uniqueSlug(string $title, ?int $ignoreId = null): string
     {
         $base = Str::slug($title) ?: Str::lower(Str::random(8));
         $slug = $base;
         $i = 2;
 
-        while (Comic::withTrashed()->where('slug', $slug)->exists()) {
+        while (Comic::withTrashed()
+            ->where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()) {
             $slug = $base . '-' . $i++;
         }
 

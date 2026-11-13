@@ -19,6 +19,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ComicController as AdminComicController;
 use App\Http\Controllers\Admin\ChapterController as AdminChapterController;
+use App\Http\Controllers\Admin\ChapterImageController as AdminChapterImageController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\AuthorController as AdminAuthorController;
 use App\Http\Controllers\Admin\CommentController as AdminCommentController;
@@ -32,7 +33,6 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 | Nhớ đặt 'serve' => false cho ổ đĩa 'local' trong config/filesystems.php
 |--------------------------------------------------------------------------
 */
-
 Route::get('storage/{path}', function (string $path) {
     abort_if(str_contains($path, '..'), 404);
 
@@ -40,7 +40,7 @@ Route::get('storage/{path}', function (string $path) {
     abort_unless($disk->exists($path), 404);
 
     return response()->file($disk->path($path), [
-        'Cache-Control' => 'public, max-age=604800',
+        'Cache-Control' => 'public, max-age=0, must-revalidate',
     ]);
 })->where('path', '.*')->name('storage.serve');
 
@@ -55,7 +55,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Laravel UI chuyển hướng về /home sau khi đăng nhập/đăng ký: đưa về trang chủ.
 // Dùng redirect()->route() (không dùng Route::redirect) để địa chỉ có kèm thư mục con của WAMP.
-Route::get('/home', fn() => redirect()->route('home'));
+Route::get('/home', fn () => redirect()->route('home'));
 
 // Danh sách truyện (lọc theo trạng thái, sắp xếp...)
 Route::get('/truyen', [ComicController::class, 'index'])->name('comics.index');
@@ -127,6 +127,16 @@ Route::prefix('admin')
             ->except(['show'])
             ->shallow();
 
+        // Quản lý ảnh của chương: kéo thả thứ tự, đổi tên, thay ảnh, xoay, đánh số lại
+        Route::patch('chapters/{chapter}/images/reorder', [AdminChapterImageController::class, 'reorder'])->name('chapters.images.reorder');
+        Route::post('chapters/{chapter}/images/renumber', [AdminChapterImageController::class, 'renumber'])->name('chapters.images.renumber');
+        Route::put('chapters/{chapter}/images/{image}/rename', [AdminChapterImageController::class, 'rename'])->name('chapters.images.rename');
+        Route::post('chapters/{chapter}/images/{image}/replace', [AdminChapterImageController::class, 'replace'])->name('chapters.images.replace');
+        Route::post('chapters/{chapter}/images/{image}/rotate', [AdminChapterImageController::class, 'rotate'])->name('chapters.images.rotate');
+
+        // Chuẩn hóa tên file + thư mục ảnh của một truyện
+        Route::post('comics/{comic}/organize', [AdminComicController::class, 'organize'])->name('comics.organize');
+
         // Xóa 1 ảnh trong chương
         Route::delete('chapters/{chapter}/images/{image}', [AdminChapterController::class, 'destroyImage'])
             ->name('chapters.images.destroy');
@@ -154,9 +164,9 @@ Route::prefix('admin')
 |--------------------------------------------------------------------------
 */
 // Đăng nhập bằng Google
-// Route::middleware('guest')->group(function () {
-//     Route::get('auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
-//     Route::get('auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
-// });
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
+    Route::get('auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
+});
 
 Auth::routes();

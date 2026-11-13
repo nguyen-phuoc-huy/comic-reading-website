@@ -49,7 +49,7 @@
         @endforeach
     </div>
     <div class="d-flex justify-content-center mt-4">
-        {{ $comics->links('pagination::bootstrap-5') }}
+        {{ $comics->links('pagination::bootstrap-4') }}
     </div>
 @endif
 @endsection
