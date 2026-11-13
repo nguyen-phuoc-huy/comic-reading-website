@@ -40,6 +40,15 @@
 
                     <button class="btn btn-primary w-100">Đăng ký</button>
                 </form>
+                @if (config('services.google.client_id'))
+                    <div class="d-flex align-items-center my-3 text-muted small">
+                        <hr class="flex-grow-1 m-0"><span class="px-2">hoặc</span><hr class="flex-grow-1 m-0">
+                    </div>
+                    <a href="{{ route('auth.google') }}" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-google text-danger"></i> Đăng ký bằng Google
+                    </a>
+                @endif
+
 
                 <p class="text-center small text-muted mt-3 mb-0">
                     Đã có tài khoản? <a href="{{ route('login') }}">Đăng nhập</a>

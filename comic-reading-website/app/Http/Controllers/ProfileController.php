@@ -55,13 +55,20 @@ class ProfileController extends Controller
         return redirect()->route('profile.edit')->with('success', 'Đã cập nhật thông tin tài khoản.');
     }
 
-    // PUT /ho-so/mat-khau  (đổi mật khẩu)
+    // PUT /ho-so/mat-khau  (đổi mật khẩu; tài khoản Google chưa có mật khẩu thì đặt lần đầu)
     public function updatePassword(Request $request)
     {
-        $data = $request->validateWithBag('updatePassword', [
-            'current_password' => ['required', 'current_password'],
-            'password'         => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
-        ], [
+        $hasPassword = $request->user()->password !== null;
+
+        $rules = [
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ];
+        if ($hasPassword) {
+            $rules['current_password'] = ['required', 'current_password'];
+            $rules['password'][] = 'different:current_password';
+        }
+
+        $data = $request->validateWithBag('updatePassword', $rules, [
             'current_password.required'         => 'Vui lòng nhập mật khẩu hiện tại.',
             'current_password.current_password' => 'Mật khẩu hiện tại không đúng.',
             'password.required'                 => 'Vui lòng nhập mật khẩu mới.',
@@ -74,6 +81,7 @@ class ProfileController extends Controller
             'password' => Hash::make($data['password']),
         ])->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Đã đổi mật khẩu.');
+        return redirect()->route('profile.edit')
+            ->with('success', $hasPassword ? 'Đã đổi mật khẩu.' : 'Đã đặt mật khẩu. Từ giờ bạn có thể đăng nhập bằng email và mật khẩu.');
     }
 }

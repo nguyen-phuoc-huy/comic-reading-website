@@ -55,7 +55,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Laravel UI chuyển hướng về /home sau khi đăng nhập/đăng ký: đưa về trang chủ.
 // Dùng redirect()->route() (không dùng Route::redirect) để địa chỉ có kèm thư mục con của WAMP.
-Route::get('/home', fn () => redirect()->route('home'));
+Route::get('/home', function () {
+    // Quản trị viên vào thẳng trang quản trị, người dùng thường về trang chủ
+    return auth()->check() && auth()->user()->role === 'admin'
+        ? redirect()->route('admin.dashboard')
+        : redirect()->route('home');
+});
 
 // Danh sách truyện (lọc theo trạng thái, sắp xếp...)
 Route::get('/truyen', [ComicController::class, 'index'])->name('comics.index');
