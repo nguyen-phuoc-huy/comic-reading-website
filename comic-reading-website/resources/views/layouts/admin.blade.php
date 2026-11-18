@@ -66,7 +66,7 @@
         <nav class="navbar navbar-dark bg-dark py-2">
             <div class="container-fluid px-3 px-md-4">
                 <a class="navbar-brand mb-0" href="{{ route('admin.dashboard') }}">
-                    <i class="bi bi-speedometer2 text-warning"></i> Quản trị
+                    <i class="bi bi-speedometer2 text-warning"></i> &ensp;QUẢN TRỊ
                 </a>
 
                 <div class="d-flex align-items-center gap-2 gap-md-3">

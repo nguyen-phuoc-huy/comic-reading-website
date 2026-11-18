@@ -64,7 +64,7 @@
 </div>
 
 <div class="d-flex justify-content-center mt-3">
-    {{ $categories->links('pagination::bootstrap-5') }}
+    {{ $categories->links('pagination::bootstrap-4') }}
 </div>
 
 {{-- Cửa sổ nhập thể loại từ Excel --}}
