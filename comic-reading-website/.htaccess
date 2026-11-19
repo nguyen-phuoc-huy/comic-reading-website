@@ -25,6 +25,6 @@
 </IfModule>
 
 <Files .env>
- Require all denied
+    Require all denied
 </Files>
 
