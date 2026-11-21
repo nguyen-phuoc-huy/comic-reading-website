@@ -14,6 +14,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfileAvatarController;
 use App\Http\Controllers\Auth\GoogleController;
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 | Nhớ đặt 'serve' => false cho ổ đĩa 'local' trong config/filesystems.php
 |--------------------------------------------------------------------------
 */
+
 Route::get('storage/{path}', function (string $path) {
     abort_if(str_contains($path, '..'), 404);
 
@@ -40,9 +42,11 @@ Route::get('storage/{path}', function (string $path) {
     abort_unless($disk->exists($path), 404);
 
     return response()->file($disk->path($path), [
-        'Cache-Control' => 'public, max-age=0, must-revalidate',
+        'Cache-Control' => 'public, max-age=3600',
     ]);
-})->where('path', '.*')->name('storage.serve');
+})->where('path', '.*')
+    ->withoutMiddleware('web') // ảnh không cần session/cookie: tránh mỗi ảnh đều đọc/ghi session
+    ->name('storage.serve');
 
 /*
 |--------------------------------------------------------------------------
@@ -97,6 +101,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/ho-so', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/ho-so', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/ho-so/mat-khau', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::put('/ho-so/avatar', [ProfileAvatarController::class, 'update'])->name('profile.avatar.update');
+    Route::delete('/ho-so/avatar', [ProfileAvatarController::class, 'destroy'])->name('profile.avatar.destroy');
 
     // Theo dõi truyện
     Route::get('/theo-doi', [FollowController::class, 'index'])->name('follows.index');

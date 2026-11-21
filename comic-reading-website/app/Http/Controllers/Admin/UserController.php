@@ -17,7 +17,7 @@ class UserController extends Controller
             ->when($request->q, function ($query, $keyword) {
                 $query->where(function ($w) use ($keyword) {
                     $w->where('name', 'like', "%{$keyword}%")
-                      ->orWhere('email', 'like', "%{$keyword}%");
+                        ->orWhere('email', 'like', "%{$keyword}%");
                 });
             })
             ->when(in_array($request->role, ['user', 'admin'], true), function ($query) use ($request) {
@@ -112,6 +112,8 @@ class UserController extends Controller
         if ($user->role === 'admin' && $this->isLastAdmin($user)) {
             return back()->with('error', 'Không thể xóa quản trị viên cuối cùng.');
         }
+
+        \App\Support\Avatar::deleteFile($user->avatar); // xóa file ảnh đại diện đã tải lên
 
         // Bình luận, lịch sử đọc, danh sách theo dõi của người này tự xóa theo (cascadeOnDelete)
         $user->delete();

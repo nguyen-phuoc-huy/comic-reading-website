@@ -297,8 +297,8 @@
                         <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             @if (auth()->user()->avatar)
-                            <img src="{{ auth()->user()->avatar }}" alt="" width="20" height="20" class="rounded-circle"
-                                referrerpolicy="no-referrer">
+                            <img src="{{ \App\Support\Avatar::url(auth()->user()) }}" alt="" width="22" height="22"
+                                class="rounded-circle" style="object-fit:cover" referrerpolicy="no-referrer">
                             @else
                             <i class="bi bi-person-circle"></i>
                             @endif
@@ -368,6 +368,15 @@
             <nav class="subnav bg-body border-bottom" aria-label="Menu chính">
                 <div class="container">
                     <ul class="nav flex-column flex-lg-row flex-lg-wrap">
+
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}"
+                                href="{{ route('home') }}">
+                                <i class="bi bi-house-door"></i> Trang chủ
+                            </a>
+                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link {{ $onIndex && !$qStatus && !$qSort ? 'active' : '' }}"
                                 href="{{ route('comics.index') }}">

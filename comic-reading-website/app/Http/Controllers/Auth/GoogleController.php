@@ -70,7 +70,10 @@ class GoogleController extends Controller
 
         // Cập nhật ảnh đại diện, đánh dấu email đã xác minh
         $user->forceFill([
-            'avatar'            => $google->getAvatar() ?: $user->avatar,
+            // Giữ nguyên ảnh người dùng tự tải lên; chỉ lấy ảnh Google khi chưa có ảnh hoặc đang dùng ảnh Google
+            'avatar'            => \App\Support\Avatar::isUploaded($user->avatar)
+                ? $user->avatar
+                : ($google->getAvatar() ?: $user->avatar),
             'email_verified_at' => $user->email_verified_at ?? now(),
         ])->save();
 
